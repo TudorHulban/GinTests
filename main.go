@@ -10,25 +10,12 @@ import (
 func main() {
 	ctx := context.Background()
 	cfg := config{
-		socket: "127.0.0.1:8001",
+		socket:    "127.0.0.1:8001",
+		debugMode: true,
 	}
 
-	r1 := route{
-		group:    k8,
-		endpoint: "/xxx",
-		method:   "GET",
-		handler:  func(c *gin.Context) { c.String(http.StatusOK, "xxx") },
-	}
-
-	r2 := route{
-		group:    logic,
-		endpoint: "/yyy",
-		method:   "GET",
-		handler:  handlerYYY,
-	}
-
-	s := NewServer(ctx, cfg, []route{r1, r2})
-	s.engine.Run(s.socket)
+	s := NewServer(cfg)
+	s.Run(ctx)
 }
 
 func handlerYYY(c *gin.Context) {

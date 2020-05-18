@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"errors"
+	"log"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -15,7 +16,8 @@ const (
 )
 
 type config struct {
-	socket string
+	socket    string
+	debugMode bool
 }
 
 type route struct {
@@ -29,9 +31,10 @@ type Server struct {
 	config
 	routes []route
 	engine *gin.Engine
+	// TODO: assert if need a logger
 }
 
-func NewServer(ctx context.Context, cfg config) *Server {
+func NewServer(cfg config) *Server {
 	s := new(Server)
 
 	s.engine = gin.New()
@@ -39,6 +42,9 @@ func NewServer(ctx context.Context, cfg config) *Server {
 	s.engine.HandleMethodNotAllowed = false
 	s.config = cfg
 
+	if s.config.debugMode {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	return s
 }
 
@@ -49,6 +55,8 @@ func (s *Server) registerRoute(r route) error {
 	if r.group != "" {
 		slash = "/"
 	}
+
+	log.Println("Route:", r.method, r.group+slash+r.endpoint)
 
 	switch r.method {
 	case http.MethodGet:
@@ -67,8 +75,46 @@ func (s *Server) registerRoute(r route) error {
 	return nil
 }
 
-func (s *Server) registerRoutes(routes []route) {
-	for _, route := range s.routes {
-		s.registerRoute(route)
+func (s *Server) registerRoutes(routes []route) error {
+	if len(routes) == 0 {
+		return errors.New("no routes to add")
 	}
+
+	for _, route := range s.routes {
+		if errReg := s.registerRoute(route); errReg != nil {
+			return errReg
+		}
+	}
+	return nil
+}
+
+// prepareRoutes Method helps with route preparation.
+func (s *Server) prepareRoutes() []route {
+	r1 := route{
+		group:    k8,
+		endpoint: "/xxx",
+		method:   "GET",
+		handler:  func(c *gin.Context) { c.String(http.StatusOK, "xxx") },
+	}
+
+	r2 := route{
+		group:    logic,
+		endpoint: "/yyy",
+		method:   "GET",
+		handler:  handlerYYY,
+	}
+
+	return []route{r1, r2}
+}
+
+func (s *Server) Run(ctx context.Context) error {
+	// Register routes
+	if errPrep := s.registerRoutes(s.prepareRoutes()); errPrep != nil {
+		return errors.Wrap(errPrep, "route preparation failed")
+	}
+
+	log.Println("run")
+	s.engine.Run()
+	log.Println("exit")
+	return nil
 }
