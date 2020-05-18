@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	log "github.com/labstack/gommon/log"
 	"github.com/pkg/errors"
 )
 
@@ -16,8 +16,8 @@ const (
 )
 
 type config struct {
-	socket    string
-	debugMode bool
+	socket string
+	l      *log.Logger
 }
 
 type route struct {
@@ -29,22 +29,21 @@ type route struct {
 
 type Server struct {
 	config
-	routes []route
 	engine *gin.Engine
-	// TODO: assert if need a logger
 }
 
 func NewServer(cfg config) *Server {
 	s := new(Server)
 
+	s.config = cfg
+	if !(s.l.Level() == 0) {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	s.engine = gin.New()
 	s.engine.RedirectTrailingSlash = true
 	s.engine.HandleMethodNotAllowed = false
-	s.config = cfg
 
-	if s.config.debugMode {
-		gin.SetMode(gin.ReleaseMode)
-	}
 	return s
 }
 
@@ -56,7 +55,7 @@ func (s *Server) registerRoute(r route) error {
 		slash = "/"
 	}
 
-	log.Println("Route:", r.method, r.group+slash+r.endpoint)
+	s.l.Debug("Adding Route: ", r.group+slash+r.endpoint, " method: ", r.method)
 
 	switch r.method {
 	case http.MethodGet:
@@ -79,8 +78,9 @@ func (s *Server) registerRoutes(routes []route) error {
 	if len(routes) == 0 {
 		return errors.New("no routes to add")
 	}
+	s.l.Debug("", routes)
 
-	for _, route := range s.routes {
+	for _, route := range routes {
 		if errReg := s.registerRoute(route); errReg != nil {
 			return errReg
 		}
@@ -113,8 +113,8 @@ func (s *Server) Run(ctx context.Context) error {
 		return errors.Wrap(errPrep, "route preparation failed")
 	}
 
-	log.Println("run")
+	s.l.Debug("Running Gin")
 	s.engine.Run()
-	log.Println("exit")
+	s.l.Info("exit")
 	return nil
 }
