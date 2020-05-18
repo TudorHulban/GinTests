@@ -16,8 +16,8 @@ const (
 )
 
 type config struct {
-	socket string
-	l      *log.Logger
+	port uint32
+	l    *log.Logger
 }
 
 type route struct {
@@ -36,7 +36,9 @@ func NewServer(cfg config) *Server {
 	s := new(Server)
 
 	s.config = cfg
-	if !(s.l.Level() == 0) {
+	// checking if log level is debug
+	if !(s.l.Level() == 1) {
+		s.l.Debug("Setting Gin Log Level to Release Mode")
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -50,24 +52,19 @@ func NewServer(cfg config) *Server {
 func (s *Server) registerRoute(r route) error {
 	r.method = strings.ToTitle(r.method)
 
-	var slash string
-	if r.group != "" {
-		slash = "/"
-	}
-
-	s.l.Debug("Adding Route: ", r.group+slash+r.endpoint, " method: ", r.method)
+	s.l.Debug("Adding Route: ", r.group+r.endpoint, " method: ", r.method)
 
 	switch r.method {
 	case http.MethodGet:
-		s.engine.GET(r.group+slash+r.endpoint, r.handler)
+		s.engine.GET(r.group+r.endpoint, r.handler)
 	case http.MethodPost:
-		s.engine.POST(r.group+slash+r.endpoint, r.handler)
+		s.engine.POST(r.group+r.endpoint, r.handler)
 	case http.MethodPut:
-		s.engine.PUT(r.group+slash+r.endpoint, r.handler)
+		s.engine.PUT(r.group+r.endpoint, r.handler)
 	case http.MethodPatch:
-		s.engine.PATCH(r.group+slash+r.endpoint, r.handler)
+		s.engine.PATCH(r.group+r.endpoint, r.handler)
 	case http.MethodDelete:
-		s.engine.DELETE(r.group+slash+r.endpoint, r.handler)
+		s.engine.DELETE(r.group+r.endpoint, r.handler)
 	default:
 		return errors.New("unsupported method: " + r.method)
 	}
@@ -78,7 +75,7 @@ func (s *Server) registerRoutes(routes []route) error {
 	if len(routes) == 0 {
 		return errors.New("no routes to add")
 	}
-	s.l.Debug("", routes)
+	s.l.Debug("Routes to add: ", routes)
 
 	for _, route := range routes {
 		if errReg := s.registerRoute(route); errReg != nil {
@@ -89,6 +86,7 @@ func (s *Server) registerRoutes(routes []route) error {
 }
 
 // prepareRoutes Method helps with route preparation.
+// Routes need to contain the starting slash ex. /route.
 func (s *Server) prepareRoutes() []route {
 	r1 := route{
 		group:    k8,
@@ -111,6 +109,11 @@ func (s *Server) Run(ctx context.Context) error {
 	// Register routes
 	if errPrep := s.registerRoutes(s.prepareRoutes()); errPrep != nil {
 		return errors.Wrap(errPrep, "route preparation failed")
+	}
+
+	gracefulServer := &http.Server{
+		Addr:    ":8080",
+		Handler: router,
 	}
 
 	s.l.Debug("Running Gin")

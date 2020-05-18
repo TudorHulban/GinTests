@@ -12,6 +12,8 @@ func main() {
 	l := log.New("HTTP Server")
 	l.SetLevel(log.DEBUG)
 
+	l.Info("Log Level: ", l.Level())
+
 	ctx := context.Background()
 	cfg := config{
 		socket: "127.0.0.1:8001",
