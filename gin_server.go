@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/labstack/gommon/log"
@@ -16,8 +18,9 @@ const (
 )
 
 type config struct {
-	port uint32
-	l    *log.Logger
+	graceSeconds uint8
+	port         uint16 // berkely sockets are still 16 bit
+	l            *log.Logger
 }
 
 type route struct {
@@ -30,6 +33,7 @@ type route struct {
 type Server struct {
 	config
 	engine *gin.Engine
+	chStop chan struct{}
 }
 
 func NewServer(cfg config) *Server {
@@ -45,6 +49,7 @@ func NewServer(cfg config) *Server {
 	s.engine = gin.New()
 	s.engine.RedirectTrailingSlash = true
 	s.engine.HandleMethodNotAllowed = false
+	s.chStop = make(chan struct{})
 
 	return s
 }
@@ -99,10 +104,17 @@ func (s *Server) prepareRoutes() []route {
 		group:    logic,
 		endpoint: "/yyy",
 		method:   "GET",
-		handler:  handlerYYY,
+		handler:  s.handlerYYY,
 	}
 
-	return []route{r1, r2}
+	r3 := route{
+		group:    k8,
+		endpoint: "/shut",
+		method:   "GET",
+		handler:  s.handlerShutdown,
+	}
+
+	return []route{r1, r2, r3}
 }
 
 func (s *Server) Run(ctx context.Context) error {
@@ -112,12 +124,39 @@ func (s *Server) Run(ctx context.Context) error {
 	}
 
 	gracefulServer := &http.Server{
-		Addr:    ":8080",
-		Handler: router,
+		Addr:    ":" + strconv.FormatUint(uint64(s.config.port), 10),
+		Handler: s.engine,
 	}
 
-	s.l.Debug("Running Gin")
-	s.engine.Run()
-	s.l.Info("exit")
+	// non blocking starting Gin using standard HTTP server graceful shutdown.
+	go func() {
+		if errServe := gracefulServer.ListenAndServe(); errServe != nil && errServe != http.ErrServerClosed {
+			s.l.Fatalf("listen: %s\n", errServe)
+		}
+	}()
+
+	<-s.chStop
+	s.shutdown(gracefulServer)
+
 	return nil
+}
+
+func (s *Server) shutdown(serverHTTP *http.Server) {
+	s.l.Print("shutting down...")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.graceSeconds)*time.Second)
+	defer cancel()
+
+	if errShutdown := serverHTTP.Shutdown(ctx); errShutdown != nil {
+		s.l.Printf("Error HTTP server shutdown: %v", errShutdown)
+	}
+
+}
+
+func (s *Server) handlerYYY(c *gin.Context) {
+	c.String(http.StatusOK, "yyy")
+}
+
+func (s *Server) handlerShutdown(c *gin.Context) {
+	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.config.graceSeconds), 10), "...")
+	s.chStop <- struct{}{}
 }
