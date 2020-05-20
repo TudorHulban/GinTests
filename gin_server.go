@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	k8           = "k8"
-	logic        = "logic"
+	k8           = "/k8"
+	logic        = "/logic"
 	endpoint_xxx = "/xxx"
 )
 
