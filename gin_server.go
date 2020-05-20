@@ -13,8 +13,9 @@ import (
 )
 
 const (
-	k8    = "k8"
-	logic = "logic"
+	k8           = "k8"
+	logic        = "logic"
+	endpoint_xxx = "/xxx"
 )
 
 type config struct {
@@ -30,14 +31,14 @@ type route struct {
 	handler  gin.HandlerFunc
 }
 
-type Server struct {
+type GinServer struct {
 	config
 	engine *gin.Engine
 	chStop chan struct{}
 }
 
-func NewServer(cfg config) *Server {
-	s := new(Server)
+func NewServer(cfg config) *GinServer {
+	s := new(GinServer)
 
 	s.config = cfg
 	// checking if log level is debug
@@ -54,7 +55,7 @@ func NewServer(cfg config) *Server {
 	return s
 }
 
-func (s *Server) registerRoute(r route) error {
+func (s *GinServer) registerRoute(r route) error {
 	r.method = strings.ToTitle(r.method)
 
 	s.l.Debug("Adding Route: ", r.group+r.endpoint, " method: ", r.method)
@@ -76,7 +77,7 @@ func (s *Server) registerRoute(r route) error {
 	return nil
 }
 
-func (s *Server) registerRoutes(routes []route) error {
+func (s *GinServer) registerRoutes(routes []route) error {
 	if len(routes) == 0 {
 		return errors.New("no routes to add")
 	}
@@ -92,10 +93,10 @@ func (s *Server) registerRoutes(routes []route) error {
 
 // prepareRoutes Method helps with route preparation.
 // Routes need to contain the starting slash ex. /route.
-func (s *Server) prepareRoutes() []route {
+func (s *GinServer) prepareRoutes() []route {
 	r1 := route{
 		group:    k8,
-		endpoint: "/xxx",
+		endpoint: endpoint_xxx,
 		method:   "GET",
 		handler:  func(c *gin.Context) { c.String(http.StatusOK, "xxx") },
 	}
@@ -117,7 +118,7 @@ func (s *Server) prepareRoutes() []route {
 	return []route{r1, r2, r3}
 }
 
-func (s *Server) Run(ctx context.Context) error {
+func (s *GinServer) Run(ctx context.Context) error {
 	// Register routes
 	if errPrep := s.registerRoutes(s.prepareRoutes()); errPrep != nil {
 		return errors.Wrap(errPrep, "route preparation failed")
@@ -141,7 +142,7 @@ func (s *Server) Run(ctx context.Context) error {
 	return nil
 }
 
-func (s *Server) shutdown(serverHTTP *http.Server) {
+func (s *GinServer) shutdown(serverHTTP *http.Server) {
 	s.l.Print("shutting down...")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.graceSeconds)*time.Second)
 	defer cancel()
@@ -152,11 +153,11 @@ func (s *Server) shutdown(serverHTTP *http.Server) {
 
 }
 
-func (s *Server) handlerYYY(c *gin.Context) {
+func (s *GinServer) handlerYYY(c *gin.Context) {
 	c.String(http.StatusOK, "yyy")
 }
 
-func (s *Server) handlerShutdown(c *gin.Context) {
+func (s *GinServer) handlerShutdown(c *gin.Context) {
 	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.config.graceSeconds), 10), "...")
 	s.chStop <- struct{}{}
 }

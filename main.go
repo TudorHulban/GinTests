@@ -6,19 +6,21 @@ import (
 	log "github.com/labstack/gommon/log"
 )
 
-func main() {
+func createConfig() config {
 	l := log.New("HTTP Server")
 	l.SetLevel(log.DEBUG)
-
 	l.Info("Log Level: ", l.Level())
 
-	ctx := context.Background()
-	cfg := config{
+	return config{
 		graceSeconds: 5,
 		port:         8001,
 		l:            l,
 	}
+}
 
-	s := NewServer(cfg)
+func main() {
+	s := NewServer(createConfig())
+
+	ctx := context.Background()
 	s.Run(ctx)
 }
