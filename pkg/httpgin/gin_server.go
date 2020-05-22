@@ -1,4 +1,4 @@
-package main
+package httpgin
 
 import (
 	"context"
@@ -18,10 +18,11 @@ const (
 	endpoint_xxx = "/xxx"
 )
 
-type config struct {
-	graceSeconds uint8
-	port         uint16 // berkely sockets are still 16 bit
-	l            *log.Logger
+type Config struct {
+	GraceSeconds uint8
+	// berkely sockets are still 16 bit
+	Port uint16
+	L    *log.Logger
 }
 
 type route struct {
@@ -32,18 +33,18 @@ type route struct {
 }
 
 type GinServer struct {
-	config
+	Config
 	engine *gin.Engine
 	chStop chan struct{}
 }
 
-func NewServer(cfg config) *GinServer {
+func NewServer(cfg Config) *GinServer {
 	s := new(GinServer)
 
-	s.config = cfg
+	s.Config = cfg
 	// checking if log level is debug
-	if !(s.l.Level() == 1) {
-		s.l.Debug("Setting Gin Log Level to Release Mode")
+	if !(s.L.Level() == 1) {
+		s.L.Debug("Setting Gin Log Level to Release Mode")
 		gin.SetMode(gin.ReleaseMode)
 	}
 
@@ -58,7 +59,7 @@ func NewServer(cfg config) *GinServer {
 func (s *GinServer) registerRoute(r route) error {
 	r.method = strings.ToTitle(r.method)
 
-	s.l.Debug("Adding Route: ", r.group+r.endpoint, " method: ", r.method)
+	s.L.Debug("Adding Route: ", r.group+r.endpoint, " method: ", r.method)
 
 	switch r.method {
 	case http.MethodGet:
@@ -81,7 +82,7 @@ func (s *GinServer) registerRoutes(routes []route) error {
 	if len(routes) == 0 {
 		return errors.New("no routes to add")
 	}
-	s.l.Debug("Routes to add: ", routes)
+	s.L.Debug("Routes to add: ", routes)
 
 	for _, route := range routes {
 		if errReg := s.registerRoute(route); errReg != nil {
@@ -125,14 +126,14 @@ func (s *GinServer) Run(ctx context.Context) error {
 	}
 
 	gracefulServer := &http.Server{
-		Addr:    ":" + strconv.FormatUint(uint64(s.config.port), 10),
+		Addr:    ":" + strconv.FormatUint(uint64(s.Config.Port), 10),
 		Handler: s.engine,
 	}
 
 	// non blocking starting Gin using standard HTTP server graceful shutdown.
 	go func() {
 		if errServe := gracefulServer.ListenAndServe(); errServe != nil && errServe != http.ErrServerClosed {
-			s.l.Fatalf("listen: %s\n", errServe)
+			s.L.Fatalf("listen: %s\n", errServe)
 		}
 	}()
 
@@ -143,12 +144,12 @@ func (s *GinServer) Run(ctx context.Context) error {
 }
 
 func (s *GinServer) shutdown(serverHTTP *http.Server) {
-	s.l.Print("shutting down...")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.graceSeconds)*time.Second)
+	s.L.Print("shutting down...")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.GraceSeconds)*time.Second)
 	defer cancel()
 
 	if errShutdown := serverHTTP.Shutdown(ctx); errShutdown != nil {
-		s.l.Printf("Error HTTP server shutdown: %v", errShutdown)
+		s.L.Printf("Error HTTP server shutdown: %v", errShutdown)
 	}
 
 }
@@ -158,6 +159,6 @@ func (s *GinServer) handlerYYY(c *gin.Context) {
 }
 
 func (s *GinServer) handlerShutdown(c *gin.Context) {
-	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.config.graceSeconds), 10), "...")
+	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.Config.GraceSeconds), 10), "...")
 	s.chStop <- struct{}{}
 }
