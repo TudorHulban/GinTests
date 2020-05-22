@@ -11,12 +11,13 @@ import (
 
 func TestXXX(t *testing.T) {
 	s := NewServer(createConfig())
-	if assert.Nil(t, s.registerRoutes(s.prepareRoutes())) {
-		checkedRoute := k8 + endpoint_xxx
+
+	if assert.Nil(t, s.RegisterRoutes(s.PrepareRoutes())) {
+		checkedRoute := EndPointGroupK8 + Endpointxxx
 		log.Println("Route: ", checkedRoute)
 
 		apitest.New().
-			Handler(s.engine).
+			Handler(s.Engine).
 			Get(checkedRoute).
 			Expect(t).
 			Body(`xxx`).

@@ -13,11 +13,15 @@ import (
 )
 
 const (
-	k8           = "/k8"
-	logic        = "/logic"
-	endpoint_xxx = "/xxx"
+	// EndPointGroupK8 Is the endpoint group for k8 related endpoints.
+	EndPointGroupK8 = "/k8"
+	// EndPointGroupLogic Is the endpoint group for business logic related endpoints.
+	EndPointGroupLogic = "/logic"
+	// Endpointxxx Is test endpoint.
+	Endpointxxx = "/xxx"
 )
 
+// Config Concentrates attributes for starting a Gin server.
 type Config struct {
 	GraceSeconds uint8
 	// berkely sockets are still 16 bit
@@ -25,19 +29,22 @@ type Config struct {
 	L    *log.Logger
 }
 
-type route struct {
-	group    string
-	endpoint string
-	method   string
-	handler  gin.HandlerFunc
+// Route Concentrates information to define a Gin route.
+type Route struct {
+	Group    string
+	Endpoint string
+	Method   string
+	Handler  gin.HandlerFunc
 }
 
+// GinServer type has everything for starting a Gin server.
 type GinServer struct {
 	Config
-	engine *gin.Engine
+	Engine *gin.Engine
 	chStop chan struct{}
 }
 
+// NewServer Is constructor for Gin server. Returns a pointer to the created instance.
 func NewServer(cfg Config) *GinServer {
 	s := new(GinServer)
 
@@ -48,37 +55,38 @@ func NewServer(cfg Config) *GinServer {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	s.engine = gin.New()
-	s.engine.RedirectTrailingSlash = true
-	s.engine.HandleMethodNotAllowed = false
+	s.Engine = gin.New()
+	s.Engine.RedirectTrailingSlash = true
+	s.Engine.HandleMethodNotAllowed = false
 	s.chStop = make(chan struct{})
 
 	return s
 }
 
-func (s *GinServer) registerRoute(r route) error {
-	r.method = strings.ToTitle(r.method)
+func (s *GinServer) registerRoute(r Route) error {
+	r.Method = strings.ToTitle(r.Method)
 
-	s.L.Debug("Adding Route: ", r.group+r.endpoint, " method: ", r.method)
+	s.L.Debug("Adding Route: ", r.Group+r.Endpoint, " method: ", r.Method)
 
-	switch r.method {
+	switch r.Method {
 	case http.MethodGet:
-		s.engine.GET(r.group+r.endpoint, r.handler)
+		s.Engine.GET(r.Group+r.Endpoint, r.Handler)
 	case http.MethodPost:
-		s.engine.POST(r.group+r.endpoint, r.handler)
+		s.Engine.POST(r.Group+r.Endpoint, r.Handler)
 	case http.MethodPut:
-		s.engine.PUT(r.group+r.endpoint, r.handler)
+		s.Engine.PUT(r.Group+r.Endpoint, r.Handler)
 	case http.MethodPatch:
-		s.engine.PATCH(r.group+r.endpoint, r.handler)
+		s.Engine.PATCH(r.Group+r.Endpoint, r.Handler)
 	case http.MethodDelete:
-		s.engine.DELETE(r.group+r.endpoint, r.handler)
+		s.Engine.DELETE(r.Group+r.Endpoint, r.Handler)
 	default:
-		return errors.New("unsupported method: " + r.method)
+		return errors.New("unsupported method: " + r.Method)
 	}
 	return nil
 }
 
-func (s *GinServer) registerRoutes(routes []route) error {
+// RegisterRoutes Registeres the routes passed.
+func (s *GinServer) RegisterRoutes(routes []Route) error {
 	if len(routes) == 0 {
 		return errors.New("no routes to add")
 	}
@@ -92,42 +100,43 @@ func (s *GinServer) registerRoutes(routes []route) error {
 	return nil
 }
 
-// prepareRoutes Method helps with route preparation.
+// PrepareRoutes Method helps with route preparation.
 // Routes need to contain the starting slash ex. /route.
-func (s *GinServer) prepareRoutes() []route {
-	r1 := route{
-		group:    k8,
-		endpoint: endpoint_xxx,
-		method:   "GET",
-		handler:  func(c *gin.Context) { c.String(http.StatusOK, "xxx") },
+func (s *GinServer) PrepareRoutes() []Route {
+	r1 := Route{
+		Group:    EndPointGroupK8,
+		Endpoint: Endpointxxx,
+		Method:   "GET",
+		Handler:  func(c *gin.Context) { c.String(http.StatusOK, "xxx") },
 	}
 
-	r2 := route{
-		group:    logic,
-		endpoint: "/yyy",
-		method:   "GET",
-		handler:  s.handlerYYY,
+	r2 := Route{
+		Group:    EndPointGroupLogic,
+		Endpoint: "/yyy",
+		Method:   "GET",
+		Handler:  s.handlerYYY,
 	}
 
-	r3 := route{
-		group:    k8,
-		endpoint: "/shut",
-		method:   "GET",
-		handler:  s.handlerShutdown,
+	r3 := Route{
+		Group:    EndPointGroupK8,
+		Endpoint: "/shut",
+		Method:   "GET",
+		Handler:  s.handlerShutdown,
 	}
 
-	return []route{r1, r2, r3}
+	return []Route{r1, r2, r3}
 }
 
+// Run Method used to start server.
 func (s *GinServer) Run(ctx context.Context) error {
 	// Register routes
-	if errPrep := s.registerRoutes(s.prepareRoutes()); errPrep != nil {
+	if errPrep := s.RegisterRoutes(s.PrepareRoutes()); errPrep != nil {
 		return errors.Wrap(errPrep, "route preparation failed")
 	}
 
 	gracefulServer := &http.Server{
 		Addr:    ":" + strconv.FormatUint(uint64(s.Config.Port), 10),
-		Handler: s.engine,
+		Handler: s.Engine,
 	}
 
 	// non blocking starting Gin using standard HTTP server graceful shutdown.
