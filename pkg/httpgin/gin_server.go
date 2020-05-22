@@ -37,6 +37,10 @@ type Route struct {
 	Handler  gin.HandlerFunc
 }
 
+type Middleware struct {
+	MiddleW func() gin.HandlerFunc
+}
+
 // GinServer type has everything for starting a Gin server.
 type GinServer struct {
 	Config
@@ -61,6 +65,10 @@ func NewServer(cfg Config) *GinServer {
 	s.chStop = make(chan struct{})
 
 	return s
+}
+
+func (s *GinServer) RegisterMiddleware(m Middleware) {
+	s.Engine.Use(m.MiddleW())
 }
 
 func (s *GinServer) registerRoute(r Route) error {
@@ -141,6 +149,7 @@ func (s *GinServer) Run(ctx context.Context) error {
 
 	// non blocking starting Gin using standard HTTP server graceful shutdown.
 	go func() {
+		s.L.Print("Listening on: ", s.Config.Port)
 		if errServe := gracefulServer.ListenAndServe(); errServe != nil && errServe != http.ErrServerClosed {
 			s.L.Fatalf("listen: %s\n", errServe)
 		}
@@ -171,4 +180,24 @@ func (s *GinServer) handlerEcho(c *gin.Context) {
 func (s *GinServer) handlerShutdown(c *gin.Context) {
 	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.Config.GraceSeconds), 10), "...")
 	s.chStop <- struct{}{}
+}
+
+func MLogger() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		t := time.Now()
+
+		// Set example variable
+		c.Set("example", "12345")
+
+		// before request
+
+		c.Next()
+
+		// after request
+		latency := time.Since(t)
+		log.Print("Latency: ", latency)
+
+		// access the status we are sending
+		log.Print(c.Writer.Status())
+	}
 }

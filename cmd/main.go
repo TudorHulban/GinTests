@@ -21,6 +21,10 @@ func createConfig() httpgin.Config {
 
 func main() {
 	s := httpgin.NewServer(createConfig())
+	mw := httpgin.Middleware{
+		MiddleW: httpgin.MLogger,
+	}
+	s.RegisterMiddleware(mw)
 
 	ctx := context.Background()
 	s.Run(ctx)
