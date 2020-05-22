@@ -30,10 +30,10 @@ func TestXXX(t *testing.T) {
 
 func TestEcho(t *testing.T) {
 	s := httpgin.NewServer(createConfig())
-	testRoute := httpgin.Route{Endpoint: "/echo", Method: "GET", Handler: echoRoute}
+	testRoute := httpgin.Route{Endpoint: "/echo/:echo", Method: "GET", Handler: echoRoute}
 
 	if assert.Nil(t, s.RegisterRoutes([]httpgin.Route{testRoute})) {
-		log.Println("Route: ", testRoute)
+		log.Println("Route: ", testRoute.Group+testRoute.Endpoint)
 
 		apitest.New().
 			Handler(s.Engine).

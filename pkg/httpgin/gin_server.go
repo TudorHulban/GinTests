@@ -112,9 +112,9 @@ func (s *GinServer) PrepareRoutes() []Route {
 
 	r2 := Route{
 		Group:    EndPointGroupLogic,
-		Endpoint: "/yyy",
+		Endpoint: "/echo/:echo",
 		Method:   "GET",
-		Handler:  s.handlerYYY,
+		Handler:  s.handlerEcho,
 	}
 
 	r3 := Route{
@@ -163,8 +163,9 @@ func (s *GinServer) shutdown(serverHTTP *http.Server) {
 
 }
 
-func (s *GinServer) handlerYYY(c *gin.Context) {
-	c.String(http.StatusOK, "yyy")
+func (s *GinServer) handlerEcho(c *gin.Context) {
+	echo := c.Params.ByName("echo")
+	c.String(http.StatusOK, echo)
 }
 
 func (s *GinServer) handlerShutdown(c *gin.Context) {
