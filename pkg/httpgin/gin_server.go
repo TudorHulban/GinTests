@@ -63,6 +63,8 @@ func NewServer(cfg Config) *GinServer {
 
 	// New does not insert any middleware.
 	s.Engine = gin.New()
+	// Recovery middleware recovers from any panics and writes a 500 if there was one.
+	s.Engine.Use(gin.Recovery())
 	s.Engine.RedirectTrailingSlash = true
 	s.Engine.HandleMethodNotAllowed = false
 	s.chStop = make(chan struct{})
