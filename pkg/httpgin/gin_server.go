@@ -24,9 +24,10 @@ const (
 // Config Concentrates attributes for starting a Gin server.
 type Config struct {
 	GraceSeconds uint8
-	// berkely sockets are still 16 bit
+	// berkeley sockets are still 16 bit
 	Port uint16
-	L    *log.Logger
+	// logger to use with Gin
+	L *log.Logger
 }
 
 // Route Concentrates information to define a Gin route.
@@ -37,6 +38,7 @@ type Route struct {
 	Handler  gin.HandlerFunc
 }
 
+// Middleware Type defined for injecting middlewares.
 type Middleware struct {
 	MiddleW func() gin.HandlerFunc
 }
@@ -59,6 +61,7 @@ func NewServer(cfg Config) *GinServer {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// New does not insert any middleware.
 	s.Engine = gin.New()
 	s.Engine.RedirectTrailingSlash = true
 	s.Engine.HandleMethodNotAllowed = false
@@ -67,6 +70,7 @@ func NewServer(cfg Config) *GinServer {
 	return s
 }
 
+// RegisterMiddleware Public method to add middleware to the Gin server.
 func (s *GinServer) RegisterMiddleware(m Middleware) {
 	s.Engine.Use(m.MiddleW())
 }
@@ -161,6 +165,7 @@ func (s *GinServer) Run(ctx context.Context) error {
 	return nil
 }
 
+// shutdown Method providing gracefull shutdown.
 func (s *GinServer) shutdown(serverHTTP *http.Server) {
 	s.L.Print("shutting down...")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.GraceSeconds)*time.Second)
@@ -169,7 +174,6 @@ func (s *GinServer) shutdown(serverHTTP *http.Server) {
 	if errShutdown := serverHTTP.Shutdown(ctx); errShutdown != nil {
 		s.L.Printf("Error HTTP server shutdown: %v", errShutdown)
 	}
-
 }
 
 func (s *GinServer) handlerEcho(c *gin.Context) {
@@ -182,21 +186,16 @@ func (s *GinServer) handlerShutdown(c *gin.Context) {
 	s.chStop <- struct{}{}
 }
 
+// MLogger Middleware logger.
 func MLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		t := time.Now()
-
-		// Set example variable
-		c.Set("example", "12345")
-
 		// before request
 
 		c.Next()
 
 		// after request
-		latency := time.Since(t)
-		log.Print("Latency: ", latency)
-
+		log.Print("Latency: ", time.Since(t))
 		// access the status we are sending
 		log.Print(c.Writer.Status())
 	}
