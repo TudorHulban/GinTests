@@ -53,6 +53,8 @@ type GinServer struct {
 	isReady bool
 }
 
+var isReady = func() bool { return false }
+
 // NewServer Is constructor for Gin server. Returns a pointer to the created instance.
 func NewServer(cfg Config) *GinServer {
 	s := new(GinServer)
@@ -204,5 +206,6 @@ func (s *GinServer) handlerShutdown(c *gin.Context) {
 
 func (s *GinServer) handlerServiceNotOperational(c *gin.Context) {
 	s.L.Debug("endpoint service not operational")
+	isReady = func() bool { return true }
 	c.String(http.StatusServiceUnavailable, "No Service. Please try later.")
 }

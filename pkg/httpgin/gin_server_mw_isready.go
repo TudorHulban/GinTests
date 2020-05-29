@@ -4,13 +4,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	log "github.com/labstack/gommon/log"
 )
 
 // MReady Middleware. 503 if middleware applied.
+// curl -L http://localhost:8001/k8/xxx
 func MReady(cfg MConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if cfg.Skipper() {
+		if cfg.Skipper() || isReady() {
 			// execute pending handlers
 			c.Next()
 			// can now exit middleware
