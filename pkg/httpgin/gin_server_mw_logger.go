@@ -8,12 +8,20 @@ import (
 )
 
 // MLogger Middleware logger.
+// See example of logger in https://stackoverflow.com/questions/50574796/gin-gonic-middleware-declaration#50575548 .
 func MLogger(cfg MConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// executes pending handlers.
+		c.Next()
+
+		if cfg.Skipper() {
+			return
+		}
+
+		log.Print("mw MLogger applied")
+
 		t := time.Now()
 		// before request
-
-		c.Next()
 
 		// after request
 		log.Print("Latency: ", time.Since(t))

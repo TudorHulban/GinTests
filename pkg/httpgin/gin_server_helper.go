@@ -15,3 +15,8 @@ func createConfig() Config {
 		L:            l,
 	}
 }
+
+// defaultSkipper returns false which processes the middleware.
+func defaultSkipper() bool {
+	return false
+}

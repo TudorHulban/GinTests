@@ -25,7 +25,7 @@ func main() {
 		MiddleW: httpgin.MLogger,
 		Cfg: httpgin.MConfig{
 			Skipper: func() bool {
-				return true
+				return false
 			},
 		},
 	}
@@ -33,6 +33,11 @@ func main() {
 
 	mwReady := httpgin.Middleware{
 		MiddleW: httpgin.MReady,
+		Cfg: httpgin.MConfig{
+			Skipper: func() bool {
+				return false
+			},
+		},
 	}
 	s.RegisterMiddleware(mwReady)
 

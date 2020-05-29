@@ -86,6 +86,10 @@ func NewServer(cfg Config) *GinServer {
 
 // RegisterMiddleware Public method to add middleware to the Gin server.
 func (s *GinServer) RegisterMiddleware(m Middleware) {
+	// if skipper not provided use default one.
+	if m.Cfg.Skipper == nil {
+		m.Cfg.Skipper = defaultSkipper
+	}
 	s.Engine.Use(m.MiddleW(m.Cfg))
 }
 
@@ -150,7 +154,14 @@ func (s *GinServer) PrepareRoutes() []Route {
 		Handler:  s.handlerShutdown,
 	}
 
-	return []Route{r1, r2, r3}
+	r4 := Route{
+		Group:    EndPointGroupK8,
+		Endpoint: "/noservice",
+		Method:   "GET",
+		Handler:  s.handlerServiceNotOperational,
+	}
+
+	return []Route{r1, r2, r3, r4}
 }
 
 // Run Method used to start server.
@@ -198,4 +209,8 @@ func (s *GinServer) handlerEcho(c *gin.Context) {
 func (s *GinServer) handlerShutdown(c *gin.Context) {
 	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.Config.GraceSeconds), 10), "...")
 	s.chStop <- struct{}{}
+}
+
+func (s *GinServer) handlerServiceNotOperational(c *gin.Context) {
+	c.String(http.StatusServiceUnavailable, "No Service. Please try later.")
 }
