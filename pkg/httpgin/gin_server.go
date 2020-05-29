@@ -12,15 +12,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	// EndPointGroupK8 Is the endpoint group for k8 related endpoints.
-	EndPointGroupK8 = "/k8"
-	// EndPointGroupLogic Is the endpoint group for business logic related endpoints.
-	EndPointGroupLogic = "/logic"
-	// Endpointxxx Is test endpoint.
-	Endpointxxx = "/xxx"
-)
-
 // Config Concentrates attributes for starting a Gin server.
 type Config struct {
 	GraceSeconds uint8
@@ -212,5 +203,6 @@ func (s *GinServer) handlerShutdown(c *gin.Context) {
 }
 
 func (s *GinServer) handlerServiceNotOperational(c *gin.Context) {
+	s.L.Debug("endpoint service not operational")
 	c.String(http.StatusServiceUnavailable, "No Service. Please try later.")
 }

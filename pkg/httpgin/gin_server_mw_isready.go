@@ -17,7 +17,12 @@ func MReady(cfg MConfig) gin.HandlerFunc {
 			return
 		}
 
-		log.Print("mw MReady applied")
-		c.Redirect(http.StatusSeeOther, EndPointGroupK8+"/noservice")
+		// check if no service route so we do not rediect again
+		if c.Request.URL.String() == EndPointGroupK8+EndPointNoService {
+			return
+		}
+
+		// can now do the redirection to desired route
+		c.Redirect(http.StatusSeeOther, EndPointGroupK8+EndPointNoService)
 	}
 }
