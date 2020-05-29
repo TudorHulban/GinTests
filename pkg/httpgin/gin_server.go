@@ -29,12 +29,10 @@ type Route struct {
 	Handler  gin.HandlerFunc
 }
 
-// MConfig Is middleware config.
+// MConfig Is middleware configuration.
 type MConfig struct {
 	// Skipper Provides a way to skip middleware. If true skip the middleware.
 	Skipper func() bool
-	// MParams passes middleware specifc configuration. TODO: Refactor under a more concrete example.
-	MParams interface{}
 }
 
 // Middleware Type defined for injecting middlewares.
@@ -53,6 +51,8 @@ type GinServer struct {
 	isReady bool
 }
 
+// global variable.
+// if true the middleware MReady is not trigerred and request reaches desired handler.
 var isReady = func() bool { return false }
 
 // NewServer Is constructor for Gin server. Returns a pointer to the created instance.
@@ -206,6 +206,5 @@ func (s *GinServer) handlerShutdown(c *gin.Context) {
 
 func (s *GinServer) handlerServiceNotOperational(c *gin.Context) {
 	s.L.Debug("endpoint service not operational")
-	isReady = func() bool { return true }
 	c.String(http.StatusServiceUnavailable, "No Service. Please try later.")
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestXXX(t *testing.T) {
+func TestInternalRoutes(t *testing.T) {
 	s := NewServer(createConfig())
 
 	if assert.Nil(t, s.RegisterRoutes(s.PrepareRoutes())) {
