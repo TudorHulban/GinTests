@@ -38,9 +38,19 @@ type Route struct {
 	Handler  gin.HandlerFunc
 }
 
+// MConfig Is middleware config.
+type MConfig struct {
+	// Skipper Provides a way to skip middleware. If true skip the middleware.
+	Skipper func() bool
+	// MParams passes middleware specifc configuration. TODO: Refactor under a more concrete example.
+	MParams interface{}
+}
+
 // Middleware Type defined for injecting middlewares.
 type Middleware struct {
-	MiddleW func() gin.HandlerFunc
+	// MConfig Is middleware config.
+	Cfg     MConfig
+	MiddleW func(MConfig) gin.HandlerFunc
 }
 
 // GinServer type has everything for starting a Gin server.
@@ -48,6 +58,8 @@ type GinServer struct {
 	Config
 	Engine *gin.Engine
 	chStop chan struct{}
+	// Server could be alive but not ready to take requests.
+	isReady bool
 }
 
 // NewServer Is constructor for Gin server. Returns a pointer to the created instance.
@@ -74,7 +86,7 @@ func NewServer(cfg Config) *GinServer {
 
 // RegisterMiddleware Public method to add middleware to the Gin server.
 func (s *GinServer) RegisterMiddleware(m Middleware) {
-	s.Engine.Use(m.MiddleW())
+	s.Engine.Use(m.MiddleW(m.Cfg))
 }
 
 func (s *GinServer) registerRoute(r Route) error {
@@ -186,19 +198,4 @@ func (s *GinServer) handlerEcho(c *gin.Context) {
 func (s *GinServer) handlerShutdown(c *gin.Context) {
 	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.Config.GraceSeconds), 10), "...")
 	s.chStop <- struct{}{}
-}
-
-// MLogger Middleware logger.
-func MLogger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		t := time.Now()
-		// before request
-
-		c.Next()
-
-		// after request
-		log.Print("Latency: ", time.Since(t))
-		// access the status we are sending
-		log.Print(c.Writer.Status())
-	}
 }
