@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	log "github.com/labstack/gommon/log"
@@ -134,7 +133,7 @@ func (s *GinServer) PrepareRoutes() []Route {
 	}
 
 	r2 := Route{
-		Group:    EndPointGroupLogic,
+		Group:    EndPointGroupK8,
 		Endpoint: "/echo/:echo",
 		Method:   "GET",
 		Handler:  s.handlerEcho,
@@ -181,30 +180,4 @@ func (s *GinServer) Run(ctx context.Context) error {
 	s.shutdown(gracefulServer)
 
 	return nil
-}
-
-// shutdown Method providing gracefull shutdown.
-func (s *GinServer) shutdown(serverHTTP *http.Server) {
-	s.L.Print("shutting down...")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(s.GraceSeconds)*time.Second)
-	defer cancel()
-
-	if errShutdown := serverHTTP.Shutdown(ctx); errShutdown != nil {
-		s.L.Printf("Error HTTP server shutdown: %v", errShutdown)
-	}
-}
-
-func (s *GinServer) handlerEcho(c *gin.Context) {
-	echo := c.Params.ByName("echo")
-	c.String(http.StatusOK, echo)
-}
-
-func (s *GinServer) handlerShutdown(c *gin.Context) {
-	c.String(http.StatusOK, "shutting down in ", strconv.FormatUint(uint64(s.Config.GraceSeconds), 10), "...")
-	s.chStop <- struct{}{}
-}
-
-func (s *GinServer) handlerServiceNotOperational(c *gin.Context) {
-	s.L.Debug("endpoint service not operational")
-	c.String(http.StatusServiceUnavailable, "No Service. Please try later.")
 }

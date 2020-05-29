@@ -31,16 +31,6 @@ func main() {
 	}
 	s.RegisterMiddleware(mwLogger)
 
-	mwReady := httpgin.Middleware{
-		MiddleW: httpgin.MReady,
-		Cfg: httpgin.MConfig{
-			Skipper: func() bool {
-				return false
-			},
-		},
-	}
-	s.RegisterMiddleware(mwReady)
-
 	ctx := context.Background()
 	s.Run(ctx)
 }

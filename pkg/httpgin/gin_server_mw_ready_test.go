@@ -11,16 +11,12 @@ import (
 
 // MW Ready moves to ready state after one request that is not available.
 // This is the behavior tested.
-func TestMWReady(t *testing.T) {
+func TestMWReadySwitch(t *testing.T) {
 	s := NewServer(createConfig())
 
 	mwReady := Middleware{
 		MiddleW: MReady,
-		Cfg: MConfig{
-			Skipper: func() bool {
-				return false
-			},
-		},
+		Cfg:     MConfig{},
 	}
 
 	s.RegisterMiddleware(mwReady)
