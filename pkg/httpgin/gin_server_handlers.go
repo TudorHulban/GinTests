@@ -1,11 +1,12 @@
 package httpgin
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -46,14 +47,31 @@ func (s *GinServer) handlerServiceNotOperational(c *gin.Context) {
 
 // environmentHandler Method is common handler that fetched environment variables.
 func (s *GinServer) environmentHandler(c *gin.Context) {
-	var env Env
-
-	for _, e := range os.Environ() {
-		pair := strings.SplitN(e, "=", 2)
-		env = append(env, OSVar{
-			Name:  pair[0],
-			Value: pair[1],
-		})
+	buf4Sort := []string{}
+	for _, osvar := range os.Environ() {
+		buf4Sort = append(buf4Sort, osvar+"\n")
 	}
-	c.JSON(http.StatusOK, env)
+
+	// sort list now for humans.
+	sort.Strings(buf4Sort)
+
+	// transform to bytes for sending over HTTP
+	buf := &bytes.Buffer{}
+	for _, sortedosvar := range buf4Sort {
+		buf.WriteString(sortedosvar)
+	}
+
+	/*
+		var env Env
+		for _, e := range os.Environ() {
+			pair := strings.SplitN(e, "=", 2)
+			buf.WriteString(e + "\n")
+			env = append(env, OSVar{
+				Name:  pair[0],
+				Value: pair[1],
+			})
+		}
+	*/
+	//c.JSON(http.StatusOK, env)
+	c.String(http.StatusOK, buf.String())
 }
