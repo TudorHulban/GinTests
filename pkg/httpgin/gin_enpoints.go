@@ -9,4 +9,6 @@ const (
 	EndPointNoService = "/noservice"
 	// Endpointxxx Is test endpoint.
 	Endpointxxx = "/xxx"
+	// EndpointEnv Is endpoint for fetching environment variables.
+	EndpointEnv = "/env"
 )

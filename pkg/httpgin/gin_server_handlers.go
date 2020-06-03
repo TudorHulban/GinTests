@@ -3,11 +3,20 @@ package httpgin
 import (
 	"context"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+type OSVar struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type Env []OSVar
 
 // shutdown Method providing gracefull shutdown.
 func (s *GinServer) shutdown(serverHTTP *http.Server) {
@@ -33,4 +42,18 @@ func (s *GinServer) handlerShutdown(c *gin.Context) {
 func (s *GinServer) handlerServiceNotOperational(c *gin.Context) {
 	s.L.Debug("endpoint service not operational")
 	c.JSON(http.StatusServiceUnavailable, gin.H{"status": "temporary no service"})
+}
+
+// environmentHandler Method is common handler that fetched environment variables.
+func (s *GinServer) environmentHandler(c *gin.Context) {
+	var env Env
+
+	for _, e := range os.Environ() {
+		pair := strings.SplitN(e, "=", 2)
+		env = append(env, OSVar{
+			Name:  pair[0],
+			Value: pair[1],
+		})
+	}
+	c.JSON(http.StatusOK, env)
 }
