@@ -160,7 +160,14 @@ func (s *GinServer) PrepareRoutes() []Route {
 		Handler:  s.environmentHandler,
 	}
 
-	return []Route{r1, r2, r3, r4, routeEnvironment}
+	routeVersion := Route{
+		Group:    EndPointGroupK8,
+		Endpoint: EndpointVersion,
+		Method:   "GET",
+		Handler:  s.handlerVersion,
+	}
+
+	return []Route{r1, r2, r3, r4, routeEnvironment, routeVersion}
 }
 
 // Run Method used to start server.

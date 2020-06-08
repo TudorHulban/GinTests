@@ -11,4 +11,6 @@ const (
 	Endpointxxx = "/xxx"
 	// EndpointEnv Is endpoint for fetching environment variables.
 	EndpointEnv = "/env"
+	// EndpointVersion Is endpoint for fetching environment variables.
+	EndpointVersion = "/version"
 )

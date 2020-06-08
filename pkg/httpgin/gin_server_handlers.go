@@ -61,17 +61,9 @@ func (s *GinServer) environmentHandler(c *gin.Context) {
 		buf.WriteString(sortedosvar)
 	}
 
-	/*
-		var env Env
-		for _, e := range os.Environ() {
-			pair := strings.SplitN(e, "=", 2)
-			buf.WriteString(e + "\n")
-			env = append(env, OSVar{
-				Name:  pair[0],
-				Value: pair[1],
-			})
-		}
-	*/
-	//c.JSON(http.StatusOK, env)
 	c.String(http.StatusOK, buf.String())
+}
+
+func (s *GinServer) handlerVersion(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"version": LDVersion})
 }
