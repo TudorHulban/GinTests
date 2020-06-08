@@ -12,13 +12,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type OSVar struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
-type Env []OSVar
-
 // shutdown Method providing gracefull shutdown.
 func (s *GinServer) shutdown(serverHTTP *http.Server) {
 	s.L.Print("shutting down...")
@@ -65,5 +58,5 @@ func (s *GinServer) environmentHandler(c *gin.Context) {
 }
 
 func (s *GinServer) handlerVersion(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"version": LDVersion})
+	c.JSON(http.StatusOK, gin.H{"version": s.Config.Version})
 }

@@ -16,10 +16,13 @@ func createConfig() httpgin.Config {
 		GraceSeconds: 5,
 		Port:         8001,
 		L:            l,
+		Version:      theMainVersion,
 	}
 }
 
 func main() {
+	log.Print("version:", theMainVersion)
+
 	s := httpgin.NewServer(createConfig())
 	mwLogger := httpgin.Middleware{
 		MiddleW: httpgin.MLogger,

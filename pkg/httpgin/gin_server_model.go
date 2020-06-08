@@ -16,6 +16,8 @@ type Config struct {
 	GraceSeconds uint8
 	// berkeley sockets are still 16 bit
 	Port uint16
+	// app version
+	Version string
 	// logger to use with Gin
 	L *log.Logger
 }
