@@ -12,7 +12,13 @@ import (
 func TestInternalRoutes(t *testing.T) {
 	s := NewServer(createConfig())
 
+	// middleware needs to be added prior to adding routes.
+	s.RegisterMiddleware(Middleware{
+		MiddleW: MLogger,
+	})
+
 	if assert.Nil(t, s.RegisterRoutes(s.PrepareRoutes())) {
+
 		apitest.New().
 			Handler(s.Engine).
 			Get(EndPointGroupK8 + Endpointxxx).
