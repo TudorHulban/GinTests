@@ -25,7 +25,7 @@ func (s *GinServer) shutdown(serverHTTP *http.Server) {
 
 func (s *GinServer) handlerEcho(c *gin.Context) {
 	echo := c.Params.ByName("echo")
-	c.JSON(http.StatusOK, gin.H{"staus": echo})
+	c.JSON(http.StatusOK, gin.H{"status": echo})
 }
 
 func (s *GinServer) handlerShutdown(c *gin.Context) {
