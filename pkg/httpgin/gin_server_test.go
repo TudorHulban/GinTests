@@ -3,6 +3,7 @@ package httpgin
 import (
 	"log"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/steinfletcher/apitest"
@@ -42,5 +43,33 @@ func TestInternalRoutes(t *testing.T) {
 			Expect(t).
 			Status(http.StatusOK).
 			End()
+	}
+}
+
+func TestRegisteredRoutes(t *testing.T) {
+	s := NewServer(createConfig())
+	s.RegisterRoutes(s.PrepareRoutes())
+
+	testCases := []struct {
+		endpoint string
+	}{
+		{"x1"},
+		{"x"},
+	}
+
+	for _, tcase := range testCases {
+		t.Run(tcase.endpoint, func(t *testing.T) {
+			isContained := false
+
+			for _, v := range s.Engine.Routes() {
+				log.Println(v.Path)
+				if strings.Contains(v.Path, tcase.endpoint) {
+					isContained = true
+					break
+				}
+			}
+
+			assert.True(t, isContained)
+		})
 	}
 }
