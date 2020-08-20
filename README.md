@@ -9,6 +9,10 @@ https://github.com/gin-gonic/gin#bind-uri
 ```
 https://github.com/gin-contrib/zap#example
 ```
+### Testing
+```
+https://github.com/gin-gonic/gin#testing
+```
 ### Resources
 ```
 https://phpsecurity.readthedocs.io/en/latest/Input-Validation.html
