@@ -130,42 +130,42 @@ func (s *GinServer) PrepareRoutes() []Route {
 	r1 := Route{
 		Group:    EndPointGroupK8,
 		Endpoint: Endpointxxx,
-		Method:   "GET",
+		Method:   http.MethodGet,
 		Handler:  func(c *gin.Context) { c.String(http.StatusOK, "xxx") },
 	}
 
 	r2 := Route{
 		Group:    EndPointGroupK8,
 		Endpoint: "/echo/:echo",
-		Method:   "GET",
+		Method:   http.MethodGet,
 		Handler:  s.handlerEcho,
 	}
 
 	r3 := Route{
 		Group:    EndPointGroupK8,
 		Endpoint: "/shut",
-		Method:   "GET",
+		Method:   http.MethodGet,
 		Handler:  s.handlerShutdown,
 	}
 
 	r4 := Route{
 		Group:    EndPointGroupK8,
 		Endpoint: "/noservice",
-		Method:   "GET",
+		Method:   http.MethodGet,
 		Handler:  s.handlerServiceNotOperational,
 	}
 
 	routeEnvironment := Route{
 		Group:    EndPointGroupK8,
 		Endpoint: EndpointEnv,
-		Method:   "GET",
+		Method:   http.MethodGet,
 		Handler:  s.environmentHandler,
 	}
 
 	routeVersion := Route{
 		Group:    EndPointGroupK8,
 		Endpoint: EndpointVersion,
-		Method:   "GET",
+		Method:   http.MethodGet,
 		Handler:  s.handlerVersion,
 	}
 
@@ -175,6 +175,7 @@ func (s *GinServer) PrepareRoutes() []Route {
 // Run Method used to start server.
 func (s *GinServer) Run(ctx context.Context) error {
 	// Register routes
+	s.L.Print("Registering Routes")
 	if errPrep := s.RegisterRoutes(s.PrepareRoutes()); errPrep != nil {
 		return errors.Wrap(errPrep, "route preparation failed")
 	}

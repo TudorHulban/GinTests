@@ -24,15 +24,19 @@ func main() {
 	log.Print("version:", theMainVersion)
 
 	s := httpgin.NewServer(createConfig())
-	mwLogger := httpgin.Middleware{
-		MiddleW: httpgin.MLogger,
-		Cfg: httpgin.MConfig{
-			Skipper: func() bool {
-				return false
+
+	/*
+
+		mwLogger := httpgin.Middleware{
+			MiddleW: httpgin.MLogger,
+			Cfg: httpgin.MConfig{
+				Skipper: func() bool {
+					return false
+				},
 			},
-		},
-	}
-	s.RegisterMiddleware(mwLogger)
+		}
+		s.RegisterMiddleware(mwLogger)
+	*/
 
 	ctx := context.Background()
 	s.Run(ctx)
