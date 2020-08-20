@@ -12,14 +12,14 @@ import (
 func TestVersion(t *testing.T) {
 	s := NewServer(createConfig())
 
-	w := httptest.NewRecorder()
-	testURL := EndPointGroupK8 + EndpointVersion
-	log.Println("TEST URL: ", testURL)
-
-	req, _ := http.NewRequest(http.MethodGet, testURL, nil)
-	s.Engine.ServeHTTP(w, req)
-
 	if assert.Nil(t, s.RegisterRoutes(s.PrepareRoutes())) {
+		w := httptest.NewRecorder()
+		testURL := EndPointGroupK8 + EndpointVersion
+		log.Println("TEST URL: ", testURL)
+
+		req, _ := http.NewRequest(http.MethodGet, testURL, nil)
+		s.Engine.ServeHTTP(w, req)
+
 		log.Println("  ")
 		for i, v := range s.Engine.Routes() {
 			log.Println("Route: ", i, v)
