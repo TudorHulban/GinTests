@@ -53,8 +53,7 @@ func TestRegisteredRoutes(t *testing.T) {
 	testCases := []struct {
 		endpoint string
 	}{
-		{"x1"},
-		{"x"},
+		{EndPointGroupK8 + EndPointNoService},
 	}
 
 	for _, tcase := range testCases {
